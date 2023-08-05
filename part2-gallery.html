@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <title>Project Gallery</title>
-  <!--
+  <head>
+    <meta charset="UTF-8" />
+    <title>Project Gallery</title>
+    <!--
       Add CSS as you like linked or otherwise, but encapsulate most within the card components.  
 
       You should also include the script code separately.  You may wish to have individual files 
       for the customElement vs the page layout and CRUD actions if you do them. Regardless of 
       what you do you use ES modules and vanilla JS.
     -->
-</head>
+  </head>
 
-<body>
-  <!--
+  <body>
+    <!--
       This page will contain a list of cards which will contain cards that overview each project in 
       your portfolio. You will dynamically create these cards as CustomElements using JavaScript 
       and populate them from localStorage and from a JSON file fetched remotely from a server using 
@@ -70,6 +69,102 @@
       use a local file, CDN or other simple method to load the framework or library. You should not 
       require the grader to install anything or run any build scripts.
     -->
-</body>
 
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let myDog = {
+          breed: "idk he a street dog",
+          description: "goes by caspy/casper",
+          url: "caspy.png",
+        };
+        localStorage.setItem("dogData", JSON.stringify(myDog));
+
+        let card = document.createElement("project-card");
+        document.body.appendChild(card);
+      });
+
+      function randomHSLA() {
+        return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`;
+      }
+
+      function loadRemote() {
+        fetch("https://api.thedogapi.com/v1/images/search", {
+          headers: {
+            "x-api-key":
+              "live_ASIctxl9GPFaf012nrKaxZvIz4Cr8TBYdm1Rd8oQX7TKGXLFlvYNtyR5cm5iui89",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            let dogData = data[0];
+            let breed = dogData.breeds[0].name;
+            let description = `Temperament: ${dogData.breeds[0].temperament}\nLife Span: ${dogData.breeds[0].life_span}`;
+
+            let card = document.querySelector("project-card");
+            card.shadowRoot.querySelector("h2").textContent = breed;
+            card.shadowRoot.querySelector("img").src = dogData.url;
+            card.shadowRoot.querySelector("img").alt = `Image of ${breed}`;
+            card.shadowRoot.querySelector("p").textContent = description;
+            card.shadowRoot.querySelector("a").href = dogData.url;
+
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+
+      function loadLocal() {
+        let dogJSON = localStorage.getItem("dogData");
+        let dogData = JSON.parse(dogJSON);
+
+        let card = document.querySelector("project-card");
+        card.shadowRoot.querySelector("h2").textContent = dogData.breed;
+        card.shadowRoot.querySelector("img").src = dogData.url;
+        card.shadowRoot.querySelector(
+          "img"
+        ).alt = `Image of ${dogData.breed}`;
+        card.shadowRoot.querySelector("p").textContent = dogData.description;
+        card.shadowRoot.querySelector("a").href = dogData.url;
+      }
+
+      class projectCard extends HTMLElement {
+        constructor() {
+          super();
+          const shadowRoot = this.attachShadow({ mode: "open" });
+          const style = document.createElement("link");
+          style.rel = "stylesheet";
+          style.href = "cardstyles.css";
+
+          const card = document.createElement("div");
+          card.style.backgroundColor = randomHSLA();
+
+          card.appendChild(style);
+
+          const projectName = document.createElement("h2");
+          projectName.innerHTML = "Project Name";
+          const projectImage = document.createElement("img");
+          projectImage.alt = `Image for ${projectName.textContent}`;
+          const projectDescription = document.createElement("p");
+          projectDescription.innerHTML = "Project Description";
+          const projectLink = document.createElement("a");
+          projectLink.textContent = "See More";
+          projectLink.href = "URL";
+
+          card.appendChild(projectName);
+          card.appendChild(projectImage);
+          card.appendChild(projectDescription);
+          card.appendChild(projectLink);
+
+          shadowRoot.appendChild(card);
+        }
+      }
+
+      customElements.define("project-card", projectCard);
+    </script>
+
+    <button onclick="loadRemote()">Load Remote</button>
+    <button onclick="loadLocal()">Load Local</button>
+  </body>
 </html>
